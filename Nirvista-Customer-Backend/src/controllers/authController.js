@@ -3,6 +3,47 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { created, badRequest, notFound, serverError } from "../utils/responseMessages.js";
 
+const adminSignup = async (req, res) => {
+    try {
+        const { name, role, email, password, confirmPassword } = req.body;
+
+        if (!name || !role || !email || !password || !confirmPassword) {
+            return badRequest(res, "name, role, email, password and confirmPassword are required");
+        }
+
+        if (role !== "admin") {
+            return badRequest(res, "Role must be admin for admin signup");
+        }
+
+        if (password !== confirmPassword) {
+            return badRequest(res, "Password and confirmPassword do not match");
+        }
+
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
+        if (existingUser) {
+            return badRequest(res, `User with email ${email} already exists`);
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newAdmin = new User({
+            name,
+            role: "admin",
+            email: email.toLowerCase(),
+            password: hashedPassword,
+        });
+
+        await newAdmin.save();
+        created(
+            res,
+            { id: newAdmin._id, name: newAdmin.name, role: newAdmin.role, email: newAdmin.email },
+            "Admin created successfully"
+        );
+    } catch (error) {
+        serverError(res);
+    }
+};
+
 const register = async (req, res) => {
     try{
         const {email, name, password, role, companyID} = req.body;
@@ -48,4 +89,4 @@ const login = async (req, res) => {
     }
 };
 
-export {register, login};
+export { adminSignup, register, login };
