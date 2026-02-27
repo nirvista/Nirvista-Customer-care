@@ -4,7 +4,7 @@ import { created, success, badRequest, notFound, serverError } from "../utils/re
 //Create a company
 const createCompany = async (req, res) => {
   try {
-    const { name, code, sla } = req.body;
+    const { name, code, companyID, sla } = req.body;
 
     const existingCompany = await Company.findOne({ code: code.toUpperCase() });
     if (existingCompany) {
@@ -14,10 +14,11 @@ const createCompany = async (req, res) => {
     const company = await Company.create({
       name,
       code: code.toUpperCase(),
+      companyID,
       sla: sla || {},
     });
 
-    return created(res, { id: company._id }, "Company created successfully");
+    return created(res, { id: company._id, companyID: company.companyID }, "Company created successfully");
   } catch (error) {
     return serverError(res, error.message);
   }
@@ -37,11 +38,13 @@ const getAllCompanies = async (req, res) => {
 const updateCompany = async (req, res) => {
   try {
     const { companyId } = req.params;
-    const { name, sla } = req.body;
+    const { name, code, sla, companyID } = req.body;
 
     const updateData = {};
     if (name) updateData.name = name;
     if (sla) updateData.sla = sla;
+    if (code) updateData.code = code.toUpperCase();
+    if (companyID) updateData.companyID = companyID;
 
     const company = await Company.findByIdAndUpdate(
       companyId,
