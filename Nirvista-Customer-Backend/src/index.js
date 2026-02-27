@@ -14,11 +14,9 @@ import cors from "cors";
 dbConnect();
 const app = express();
 
-app.use(cors(
-  {
-    origin: "*"
-  }
-));
+app.use(cors({
+  origin: "*"|| "https://localhost:3000"
+}));
 
 //Middleware
 app.use(express.json());
