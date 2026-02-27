@@ -7,9 +7,14 @@ import userRoutes from "./routes/userRoutes.js";
 import companyRoutes from "./routes/companyRoutes.js";
 import agentRoutes from "./routes/agentRoutes.js";
 import supervisorRoutes from "./routes/supervisorRoutes.js";
+import ticketRoutes from "./routes/ticketRoutes.js";
+import widgetRoutes from "./routes/widgetRoutes.js";
+import cors from "cors";
 
 dbConnect();
 const app = express();
+
+app.use(cors());
 
 //Middleware
 app.use(express.json());
@@ -20,6 +25,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/companies", companyRoutes);
 app.use("/api/agents", agentRoutes);
 app.use("/api/supervisors", supervisorRoutes);
+app.use("/api/tickets", ticketRoutes);
+app.use("/api/chat-widgets", widgetRoutes);
 
 //Start the server
 const PORT = process.env.PORT || 7002;
