@@ -24,7 +24,7 @@ const createWidget = async (req, res) => {
 
         // Create widget
         const widget = new Widget({
-            companyId: company._id,
+            companyID: company.companyID,
             name,
             allowedDomains
         });
@@ -45,31 +45,22 @@ const createWidget = async (req, res) => {
 // GET /api/chat-widgets
 const getWidgets = async (req, res) => {
     try {
-        const { role, companyID } = req.user;
-        const { companyId } = req.query;
+        const { role, companyID: userCompanyID } = req.user;
+        const { companyID: queryCompanyID } = req.query;
 
         const filter = {};
 
         if (role === "admin") {
-            // Admin can filter by companyId query param, or see all if not provided
-            if (companyId) {
-                if (!mongoose.Types.ObjectId.isValid(companyId)) {
-                    return badRequest(res, "Invalid companyId format");
-                }
-                filter.companyId = companyId;
+            // Admin can filter by companyID query param, or see all if not provided
+            if (queryCompanyID) {
+                filter.companyID = queryCompanyID;
             }
         } else if (role === "supervisor") {
             // Supervisor can only see their company's widgets
-            const company = await Company.findOne({ companyID });
-            if (!company) {
-                return notFound(res, "Company not found");
-            }
-            filter.companyId = company._id;
+            filter.companyID = userCompanyID;
         }
 
-        const widgets = await Widget.find(filter)
-            .populate("companyId", "name")
-            .lean();
+        const widgets = await Widget.find(filter).lean();
 
         return success(res, widgets, "Widgets retrieved successfully");
 
@@ -85,9 +76,7 @@ const getWidgetById = async (req, res) => {
         const { widgetId } = req.params;
         const { role, companyID } = req.user;
 
-        const widget = await Widget.findOne({ widgetId })
-            .populate("companyId", "name companyID")
-            .lean();
+        const widget = await Widget.findOne({ widgetId }).lean();
 
         if (!widget) {
             return notFound(res, "Widget not found");
@@ -95,8 +84,7 @@ const getWidgetById = async (req, res) => {
 
         // Role-based access check for non-admin
         if (role !== "admin") {
-            const company = await Company.findOne({ companyID });
-            if (!company || widget.companyId._id.toString() !== company._id.toString()) {
+            if (widget.companyID !== companyID) {
                 return notFound(res, "Widget not found");
             }
         }

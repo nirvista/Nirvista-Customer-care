@@ -65,8 +65,8 @@ const updateCompany = async (req, res) => {
 //Get SLA configuration
 const getCompanySLA = async (req, res) => {
   try {
-    const { companyId } = req.params;
-    const company = await Company.findById(companyId).select("name code sla");
+    const { companyID } = req.params;
+    const company = await Company.findOne({ companyID }).select("name code sla");
 
     if (!company) {
       return notFound(res, "Company not found");

@@ -5,9 +5,8 @@ const widgetSchema = new mongoose.Schema({
         type: String,
         unique: true,
     },
-    companyId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Company",
+    companyID: {
+        type: String,
         required: true
     },
     name: {

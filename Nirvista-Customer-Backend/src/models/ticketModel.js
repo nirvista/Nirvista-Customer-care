@@ -46,9 +46,8 @@ const ticketSchema = new mongoose.Schema({
         type: String,
         unique: true
     },
-    companyId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Company",
+    companyID: {
+        type: String,
         required: true
     },
     widgetId: {
@@ -112,7 +111,7 @@ ticketSchema.pre("save", async function(next) {
 });
 
 // Index for search and filtering
-ticketSchema.index({ companyId: 1, status: 1 });
+ticketSchema.index({ companyID: 1, status: 1 });
 ticketSchema.index({ "customer.email": 1 });
 ticketSchema.index({ assignedAgentId: 1 });
 ticketSchema.index({ widgetId: 1 });

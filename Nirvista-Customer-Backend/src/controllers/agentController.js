@@ -22,7 +22,7 @@ const createAgent = async (req, res) => {
         });
         
         await newAgent.save();
-        created(res, { id: newAgent._id, email: newAgent.email, name: newAgent.name }, "Agent created successfully");
+        created(res, { id: newAgent._id, email: newAgent.email, name: newAgent.name, companyID: newAgent.companyID }, "Agent created successfully");
     } catch (error) {
         serverError(res);
     }
