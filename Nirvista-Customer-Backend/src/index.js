@@ -9,6 +9,8 @@ import agentRoutes from "./routes/agentRoutes.js";
 import supervisorRoutes from "./routes/supervisorRoutes.js";
 import ticketRoutes from "./routes/ticketRoutes.js";
 import widgetRoutes from "./routes/widgetRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
 import cors from "cors";
 
 dbConnect();
@@ -29,6 +31,8 @@ app.use("/api/agents", agentRoutes);
 app.use("/api/supervisors", supervisorRoutes);
 app.use("/api/tickets", ticketRoutes);
 app.use("/api/chat-widgets", widgetRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/reports", reportRoutes);
 
 //Start the server
 const PORT = process.env.PORT || 7002;
