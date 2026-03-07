@@ -1,44 +1,40 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Login from './Components/login';
-import Signup from './Components/signup';
-import ProtectedRoute from './Components/ProtectedRoute';
-import Dashboard from './pages/Dashboard';
-import Agents from './pages/Agents';
-import Supervisors from './pages/Supervisors';
-import Companies from './pages/Companies';
+import Signin from './Components/signin';
+import Signup from './Components/singup';
 
 function App() {
-    return (
-        <Router>
+return (
+    <Router>
+        <div className="App">
+            <nav className='bg-[#0b7d7b] py-2'>
+                <div className='flex items-center justify-between'>
+                    <div className='w-1/3'></div>
+                    
+                    <div className='w-1/3 flex justify-center'> 
+                        <img className='object-contain h-10' src="logo/logo.png" alt="logo" />
+                    </div>
+                
+                    <div className="w-1/3 flex justify-end space-x-4">
+                        <Link to="/" className="px-2 py-1 border-2 border-white text-white font-semibold rounded-lg hover:bg-[#0b7d7b] hover:text-white transition">
+                            LOGIN
+                        </Link>
+
+                        <Link to="/signin" className="px-2 py-1 border-2 border-white text-white font-semibold rounded-lg hover:bg-[#0b7d7b] hover:text-white transition">
+                            SIGN IN
+                        </Link>
+                    </div>
+                
+                </div>
+            </nav>
+
             <Routes>
-                {/* Public routes */}
                 <Route path="/" element={<Login />} />
+                <Route path="/signin" element={<Signin />} />
                 <Route path="/signup" element={<Signup />} />
-
-                {/* Protected routes */}
-                <Route path="/dashboard" element={
-                    <ProtectedRoute allowedRoles={["admin", "supervisor", "agent"]}>
-                        <Dashboard />
-                    </ProtectedRoute>
-                } />
-                <Route path="/agents" element={
-                    <ProtectedRoute allowedRoles={["admin", "supervisor"]}>
-                        <Agents />
-                    </ProtectedRoute>
-                } />
-                <Route path="/supervisors" element={
-                    <ProtectedRoute allowedRoles={["admin"]}>
-                        <Supervisors />
-                    </ProtectedRoute>
-                } />
-                <Route path="/companies" element={
-                    <ProtectedRoute allowedRoles={["admin"]}>
-                        <Companies />
-                    </ProtectedRoute>
-                } />
-            </Routes>
-        </Router>
-    );
+            </Routes>    
+        </div>
+    </Router>
+  );    
 }
-
 export default App;
