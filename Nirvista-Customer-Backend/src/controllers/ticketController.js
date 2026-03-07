@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Ticket from "../models/ticketModel.js";
 import Widget from "../models/widgetModel.js";
 import User from "../models/userModel.js";
+import { autoAssignNewTicket, updateAgentStatus, processUnassignedTickets } from "../services/ticketAssignmentService.js";
 import { success, created, notFound, serverError, forbidden, badRequest } from "../utils/responseMessages.js";
 
 // POST /api/tickets/chat
@@ -62,10 +63,27 @@ const createTicketFromChat = async (req, res) => {
 
         await ticket.save();
 
-        return created(res, {
+        // Auto-assign the ticket to an agent
+        const assignmentResult = await autoAssignNewTicket(ticket);
+
+        // Fetch updated ticket if assignment was successful
+        let responseData = {
             ticketId: ticket.ticketId,
-            status: "new",
-        }, "Ticket created successfully");
+            status: ticket.status,
+        };
+
+        if (assignmentResult.success) {
+            responseData.assignedAgent = {
+                id: assignmentResult.agentId,
+                name: assignmentResult.agentName,
+                email: assignmentResult.agentEmail
+            };
+            responseData.status = "open";
+        } else {
+            responseData.assignmentNote = "Ticket created but not yet assigned - " + assignmentResult.reason;
+        }
+
+        return created(res, responseData, "Ticket created successfully");
 
     } catch (error) {
         console.error("Error creating ticket from chat:", error);
@@ -287,16 +305,30 @@ const assignTicket = async (req, res) => {
             return forbidden(res, "Cannot assign ticket to an agent from a different company");
         }
 
-        // Update ticket assignment
-        ticket.assignedAgentId = agent._id;
+        const previousAgentId = ticket.assignedAgentId;
 
-        // If ticket is new, change status to open
+        // Update ticket assignment
+        ticket.assignedAgentId = agentId;
+
+        // Update ticket
+        ticket.assignedAgentId = agentId;
         if (ticket.status === "new") {
             ticket.status = "open";
         }
-
         await ticket.save();
 
+        // Update new agent's stats
+        await User.findByIdAndUpdate(agentId, {
+            lastAssignedAt: new Date(),
+            $inc: { activeTicketCount: 1 },
+            isIdle: false
+        });
+
+        // Update previous agent's stats if there was one
+        if (previousAgentId && previousAgentId.toString() !== agentId) {
+            await updateAgentStatus(previousAgentId);
+        }
+        
         return success(res, {
             ticketId: ticket.ticketId,
             assignedAgentId: ticket.assignedAgentId,
@@ -377,6 +409,11 @@ const updateTicketStatus = async (req, res) => {
         ticket.status = status;
         await ticket.save();
 
+        // Update agent status when ticket is resolved or closed
+        if ((status === "resolved" || status === "closed") && ticket.assignedAgentId) {
+            await updateAgentStatus(ticket.assignedAgentId);
+        }
+
         return success(res, {
             ticketId: ticket.ticketId,
             status: ticket.status,
@@ -394,7 +431,7 @@ const updateTicketPriority = async (req, res) => {
     try {
         const { ticketId } = req.params;
         const { priority } = req.body;
-        const { role, companyID } = req.user;
+        const { role, companyID, id: userId } = req.user;
 
         if (!priority) {
             return badRequest(res, "priority is required");
@@ -419,6 +456,12 @@ const updateTicketPriority = async (req, res) => {
         const previousPriority = ticket.priority;
         ticket.priority = priority;
         await ticket.save();
+
+        // If ticket is unassigned, trigger reprocessing of queue
+        if (!ticket.assignedAgentId) {
+            // Optionally process unassigned tickets to reassign by new priority
+            setImmediate(() => processUnassignedTickets());
+        }
 
         return success(res, {
             ticketId: ticket.ticketId,

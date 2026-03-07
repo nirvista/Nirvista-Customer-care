@@ -23,6 +23,22 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "",
     },
+    isActive: {
+        type: Boolean,
+        default: true,
+    },
+    isIdle: {
+        type: Boolean,
+        default: true,
+    },
+    lastAssignedAt: {
+        type: Date,
+        default: null,
+    },
+    activeTicketCount: {
+        type: Number,
+        default: 0,
+    }
 },{
     timestamps: true,
 });
