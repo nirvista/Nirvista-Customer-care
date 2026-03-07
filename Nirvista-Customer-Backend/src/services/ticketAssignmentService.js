@@ -114,7 +114,7 @@ const assignTicketToAgent = async (ticket) => {
             },
             $inc: { activeTicketCount: 1 }
         },
-        { after: true }
+        { returnDocument: 'after' }
     );
 
     if (!updateResult) {

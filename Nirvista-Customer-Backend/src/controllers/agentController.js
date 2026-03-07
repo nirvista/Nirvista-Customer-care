@@ -65,7 +65,7 @@ const updateAgent = async (req, res) => {
         const agent = await User.findOneAndUpdate(
             { _id: req.params.id, role: "agent" },
             updateData,
-            { after: true }
+            { returnDocument: 'after' }
         ).select("-password");
 
         if (!agent) {

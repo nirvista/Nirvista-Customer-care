@@ -311,7 +311,6 @@ const assignTicket = async (req, res) => {
         ticket.assignedAgentId = agentId;
 
         // Update ticket
-        ticket.assignedAgentId = agentId;
         if (ticket.status === "new") {
             ticket.status = "open";
         }
@@ -459,8 +458,12 @@ const updateTicketPriority = async (req, res) => {
 
         // If ticket is unassigned, trigger reprocessing of queue
         if (!ticket.assignedAgentId) {
-            // Optionally process unassigned tickets to reassign by new priority
-            setImmediate(() => processUnassignedTickets());
+            // Process unassigned tickets to reassign by new priority
+            setImmediate(() => {
+                processUnassignedTickets().catch((error) => {
+                    console.error("Error processing unassigned tickets after priority update:", error);
+                });
+            });
         }
 
         return success(res, {
