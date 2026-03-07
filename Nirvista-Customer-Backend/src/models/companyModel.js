@@ -14,6 +14,11 @@ const companySchema = new mongoose.Schema(
       uppercase: true,
       trim: true,
     },
+    companyID: {
+      type: String,
+      unique: true,
+      required: [true, "Company ID is required"],
+    },
     sla: {
       firstResponseMinutes: {
         type: Number,

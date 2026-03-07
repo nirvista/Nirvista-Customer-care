@@ -22,7 +22,7 @@ const createAgent = async (req, res) => {
         });
         
         await newAgent.save();
-        created(res, { id: newAgent._id, email: newAgent.email, name: newAgent.name }, "Agent created successfully");
+        created(res, { id: newAgent._id, email: newAgent.email, name: newAgent.name, companyID: newAgent.companyID }, "Agent created successfully");
     } catch (error) {
         serverError(res);
     }
@@ -65,7 +65,7 @@ const updateAgent = async (req, res) => {
         const agent = await User.findOneAndUpdate(
             { _id: req.params.id, role: "agent" },
             updateData,
-            { new: true }
+            { after: true }
         ).select("-password");
 
         if (!agent) {

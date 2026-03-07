@@ -20,6 +20,6 @@ router.get("/", verifyToken, authorizeRoles("admin"), getAllCompanies);
 router.put("/:companyId", verifyToken, authorizeRoles("admin"), updateCompany);
 
 //Admin and Supervisor
-router.get("/:companyId/sla", verifyToken, authorizeRoles("admin", "supervisor"), getCompanySLA);
+router.get("/:companyID/sla", verifyToken, authorizeRoles("admin", "supervisor"), getCompanySLA);
 
 export default router;

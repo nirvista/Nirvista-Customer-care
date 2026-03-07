@@ -65,7 +65,7 @@ const updateSupervisor = async (req, res) => {
         const supervisor = await User.findOneAndUpdate(
             { _id: req.params.id, role: "supervisor" },
             updateData,
-            { new: true }
+            { after: true }
         ).select("-password");
 
         if (!supervisor) {
