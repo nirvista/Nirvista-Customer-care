@@ -11,6 +11,8 @@ import ticketRoutes from "./routes/ticketRoutes.js";
 import widgetRoutes from "./routes/widgetRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
+import assignmentRoutes from "./routes/assignmentRoutes.js";
+import startAgentStatsSync from "./jobs/agentStatsSync.js";
 import cors from "cors";
 
 dbConnect();
@@ -33,9 +35,12 @@ app.use("/api/tickets", ticketRoutes);
 app.use("/api/chat-widgets", widgetRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reports", reportRoutes);
-
+app.use("/api/assignment", assignmentRoutes);
 //Start the server
 const PORT = process.env.PORT || 7002;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+
+  // Start scheduled job for syncing agent stats
+  startAgentStatsSync();
 });
