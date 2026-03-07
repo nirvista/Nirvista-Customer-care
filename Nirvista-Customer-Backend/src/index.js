@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
+import morgan from "morgan";
 import dbConnect from "./config/dbConnect.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -23,6 +24,7 @@ app.use(cors({
 }));
 
 //Middleware
+app.use(morgan("dev"));
 app.use(express.json());
 
 //Routes
