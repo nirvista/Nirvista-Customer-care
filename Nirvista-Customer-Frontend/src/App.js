@@ -6,8 +6,15 @@ import Dashboard from './pages/Dashboard';
 import Agents from './pages/Agents';
 import Supervisors from './pages/Supervisors';
 import Companies from './pages/Companies';
+import Tickets from './pages/Tickets';
+import TicketChat from './pages/TicketChat';
+import ChatWidget from './Components/ChatWidget';
 
 function App() {
+    // Get widget config from environment variables
+const widgetId = process.env.REACT_APP_WIDGET_ID || 'YOUR_WIDGET_ID';
+const serverUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:7002';
+
     return (
         <Router>
             <Routes>
@@ -19,6 +26,16 @@ function App() {
                 <Route path="/dashboard" element={
                     <ProtectedRoute allowedRoles={["admin", "supervisor", "agent"]}>
                         <Dashboard />
+                    </ProtectedRoute>
+                } />
+                <Route path="/tickets" element={
+                    <ProtectedRoute allowedRoles={["admin", "supervisor", "agent"]}>
+                        <Tickets />
+                    </ProtectedRoute>
+                } />
+                <Route path="/tickets/:ticketId" element={
+                    <ProtectedRoute allowedRoles={["admin", "supervisor", "agent"]}>
+                        <TicketChat />
                     </ProtectedRoute>
                 } />
                 <Route path="/agents" element={
@@ -37,6 +54,15 @@ function App() {
                     </ProtectedRoute>
                 } />
             </Routes>
+
+            {/* Chat Widget - Only show on public pages or for testing */}
+            <ChatWidget
+                widgetId={widgetId}
+                serverUrl={serverUrl}
+                primaryColor="#0b7d7b"
+                welcomeMessage="Hi! How can we help you today?"
+                position="bottom-right"
+            />
         </Router>
     );
 }
