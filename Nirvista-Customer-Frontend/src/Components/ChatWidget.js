@@ -4,7 +4,7 @@ import './ChatWidget.css';
 
 const ChatWidget = ({
     widgetId,
-    serverUrl = 'http://localhost:7001',
+    serverUrl = 'https://nirvista-customer-care.onrender.com',
     primaryColor = '#0b7d7b',
     welcomeMessage = 'Hi! How can we help you today?',
     position = 'bottom-right'

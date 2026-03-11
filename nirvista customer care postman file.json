@@ -1,0 +1,557 @@
+{
+  "info": {
+    "name": "nirvista customer care postman file",
+    "description": "Postman collection for Nirvista Customer Care backend APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:7002" },
+    { "key": "token", "value": "" },
+    { "key": "companyId", "value": "" },
+    { "key": "companyCode", "value": "NIR" },
+    { "key": "companyBusinessId", "value": "NIRVISTA001" },
+    { "key": "agentId", "value": "" },
+    { "key": "supervisorId", "value": "" },
+    { "key": "ticketId", "value": "" },
+    { "key": "widgetId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Admin Signup",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/admin-signup", "host": ["{{baseUrl}}"], "path": ["api", "auth", "admin-signup"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin User\",\n  \"role\": \"admin\",\n  \"email\": \"admin@nirvista.com\",\n  \"password\": \"Admin@123\",\n  \"confirmPassword\": \"Admin@123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@nirvista.com\",\n  \"password\": \"Admin@123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.token) {",
+                  "  pm.collectionVariables.set('token', json.data.token);",
+                  "}",
+                  "if (json && json.data && json.data.user && json.data.user.companyID) {",
+                  "  pm.collectionVariables.set('companyBusinessId', json.data.user.companyID);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Admin Route",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/users/admin", "host": ["{{baseUrl}}"], "path": ["api", "users", "admin"] }
+          }
+        },
+        {
+          "name": "Supervisor Route",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/users/supervisor", "host": ["{{baseUrl}}"], "path": ["api", "users", "supervisor"] }
+          }
+        },
+        {
+          "name": "Agent Route",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/users/agent", "host": ["{{baseUrl}}"], "path": ["api", "users", "agent"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Companies",
+      "item": [
+        {
+          "name": "Create Company",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/companies", "host": ["{{baseUrl}}"], "path": ["api", "companies"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nirvista Pvt Ltd\",\n  \"code\": \"{{companyCode}}\",\n  \"companyID\": \"{{companyBusinessId}}\",\n  \"sla\": {\n    \"firstResponseMins\": 240,\n    \"resolutionMins\": 1440\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Companies",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/companies", "host": ["{{baseUrl}}"], "path": ["api", "companies"] }
+          }
+        },
+        {
+          "name": "Update Company",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/companies/{{companyId}}", "host": ["{{baseUrl}}"], "path": ["api", "companies", "{{companyId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nirvista Support\",\n  \"code\": \"{{companyCode}}\",\n  \"companyID\": \"{{companyBusinessId}}\",\n  \"sla\": {\n    \"firstResponseMins\": 120,\n    \"resolutionMins\": 720\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Company SLA",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/companies/{{companyBusinessId}}/sla", "host": ["{{baseUrl}}"], "path": ["api", "companies", "{{companyBusinessId}}", "sla"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agents",
+      "item": [
+        {
+          "name": "Create Agent",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/agents", "host": ["{{baseUrl}}"], "path": ["api", "agents"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"agent1@nirvista.com\",\n  \"name\": \"Agent One\",\n  \"password\": \"Agent@123\",\n  \"companyID\": \"{{companyBusinessId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Agents",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/agents", "host": ["{{baseUrl}}"], "path": ["api", "agents"] }
+          }
+        },
+        {
+          "name": "Get Agent By Id",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/agents/{{agentId}}", "host": ["{{baseUrl}}"], "path": ["api", "agents", "{{agentId}}"] }
+          }
+        },
+        {
+          "name": "Update Agent",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/agents/{{agentId}}", "host": ["{{baseUrl}}"], "path": ["api", "agents", "{{agentId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Agent One Updated\",\n  \"email\": \"agent1@nirvista.com\",\n  \"password\": \"Agent@123\",\n  \"companyID\": \"{{companyBusinessId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Agent",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/agents/{{agentId}}", "host": ["{{baseUrl}}"], "path": ["api", "agents", "{{agentId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Supervisors",
+      "item": [
+        {
+          "name": "Create Supervisor",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/supervisors", "host": ["{{baseUrl}}"], "path": ["api", "supervisors"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sup1@nirvista.com\",\n  \"name\": \"Supervisor One\",\n  \"password\": \"Supervisor@123\",\n  \"companyID\": \"{{companyBusinessId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Supervisors",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/supervisors", "host": ["{{baseUrl}}"], "path": ["api", "supervisors"] }
+          }
+        },
+        {
+          "name": "Get Supervisor By Id",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/supervisors/{{supervisorId}}", "host": ["{{baseUrl}}"], "path": ["api", "supervisors", "{{supervisorId}}"] }
+          }
+        },
+        {
+          "name": "Update Supervisor",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/supervisors/{{supervisorId}}", "host": ["{{baseUrl}}"], "path": ["api", "supervisors", "{{supervisorId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Supervisor One Updated\",\n  \"email\": \"sup1@nirvista.com\",\n  \"password\": \"Supervisor@123\",\n  \"companyID\": \"{{companyBusinessId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Supervisor",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/supervisors/{{supervisorId}}", "host": ["{{baseUrl}}"], "path": ["api", "supervisors", "{{supervisorId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tickets",
+      "item": [
+        {
+          "name": "Create Ticket From Chat (Public)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/tickets/chat", "host": ["{{baseUrl}}"], "path": ["api", "tickets", "chat"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"widgetId\": \"{{widgetId}}\",\n  \"name\": \"Rahul Sharma\",\n  \"email\": \"rahul@example.com\",\n  \"phone\": \"9876543210\",\n  \"message\": \"Need help with my order.\",\n  \"pageUrl\": \"https://example.com/support\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Tickets",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets?page=1&limit=20&status=open&priority=high&channel=chat&customerEmail=rahul@example.com&tag=billing&search=order",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tickets"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "status", "value": "open" },
+                { "key": "priority", "value": "high" },
+                { "key": "channel", "value": "chat" },
+                { "key": "customerEmail", "value": "rahul@example.com" },
+                { "key": "tag", "value": "billing" },
+                { "key": "search", "value": "order" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Ticket By TicketId",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/tickets/{{ticketId}}", "host": ["{{baseUrl}}"], "path": ["api", "tickets", "{{ticketId}}"] }
+          }
+        },
+        {
+          "name": "Assign Ticket",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/assign", "host": ["{{baseUrl}}"], "path": ["api", "tickets", "{{ticketId}}", "assign"] },
+            "body": { "mode": "raw", "raw": "{\n  \"agentId\": \"{{agentId}}\"\n}" }
+          }
+        },
+        {
+          "name": "Update Ticket Status",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "tickets", "{{ticketId}}", "status"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"open\"\n}" }
+          }
+        },
+        {
+          "name": "Update Ticket Priority",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/priority", "host": ["{{baseUrl}}"], "path": ["api", "tickets", "{{ticketId}}", "priority"] },
+            "body": { "mode": "raw", "raw": "{\n  \"priority\": \"high\"\n}" }
+          }
+        },
+        {
+          "name": "Update Ticket Tags",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/tags", "host": ["{{baseUrl}}"], "path": ["api", "tickets", "{{ticketId}}", "tags"] },
+            "body": { "mode": "raw", "raw": "{\n  \"tags\": [\"billing\", \"urgent\"]\n}" }
+          }
+        },
+        {
+          "name": "Add Agent Message",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/messages", "host": ["{{baseUrl}}"], "path": ["api", "tickets", "{{ticketId}}", "messages"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channel\": \"chat\",\n  \"body\": \"We are checking your issue.\",\n  \"attachments\": []\n}"
+            }
+          }
+        },
+        {
+          "name": "Add Customer Message (Public)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/customer-message", "host": ["{{baseUrl}}"], "path": ["api", "tickets", "{{ticketId}}", "customer-message"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"widgetId\": \"{{widgetId}}\",\n  \"body\": \"Any update on my issue?\",\n  \"attachments\": []\n}"
+            }
+          }
+        },
+        {
+          "name": "Add Ticket Note",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/notes", "host": ["{{baseUrl}}"], "path": ["api", "tickets", "{{ticketId}}", "notes"] },
+            "body": { "mode": "raw", "raw": "{\n  \"note\": \"Followed up with customer over call.\"\n}" }
+          }
+        },
+        {
+          "name": "Get Ticket Notes",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/notes", "host": ["{{baseUrl}}"], "path": ["api", "tickets", "{{ticketId}}", "notes"] }
+          }
+        },
+        {
+          "name": "Get Ticket SLA",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/tickets/{{ticketId}}/sla", "host": ["{{baseUrl}}"], "path": ["api", "tickets", "{{ticketId}}", "sla"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat Widgets",
+      "item": [
+        {
+          "name": "Create Widget",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/chat-widgets", "host": ["{{baseUrl}}"], "path": ["api", "chat-widgets"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyID\": \"{{companyBusinessId}}\",\n  \"name\": \"Website Support Widget\",\n  \"allowedDomains\": [\"example.com\", \"www.example.com\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Widgets",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/api/chat-widgets?companyID={{companyBusinessId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat-widgets"],
+              "query": [{ "key": "companyID", "value": "{{companyBusinessId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get Widget By WidgetId",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": { "raw": "{{baseUrl}}/api/chat-widgets/{{widgetId}}", "host": ["{{baseUrl}}"], "path": ["api", "chat-widgets", "{{widgetId}}"] }
+          }
+        },
+        {
+          "name": "Update Widget",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/chat-widgets/{{widgetId}}", "host": ["{{baseUrl}}"], "path": ["api", "chat-widgets", "{{widgetId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Widget\",\n  \"allowedDomains\": [\"example.com\"],\n  \"isActive\": true,\n  \"settings\": {\n    \"themeColor\": \"#007bff\",\n    \"position\": \"bottom-right\"\n  }\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/summary?from=2026-01-01&to=2026-01-31&companyID={{companyBusinessId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "summary"],
+              "query": [
+                { "key": "from", "value": "2026-01-01" },
+                { "key": "to", "value": "2026-01-31" },
+                { "key": "companyID", "value": "{{companyBusinessId}}" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Tickets Per Day Report",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/tickets-per-day?from=2026-01-01&to=2026-01-31&companyID={{companyBusinessId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "tickets-per-day"],
+              "query": [
+                { "key": "from", "value": "2026-01-01" },
+                { "key": "to", "value": "2026-01-31" },
+                { "key": "companyID", "value": "{{companyBusinessId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Response Time Report",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/response-time?from=2026-01-01&to=2026-01-31&companyID={{companyBusinessId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "response-time"],
+              "query": [
+                { "key": "from", "value": "2026-01-01" },
+                { "key": "to", "value": "2026-01-31" },
+                { "key": "companyID", "value": "{{companyBusinessId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resolution Time Report",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/resolution-time?from=2026-01-01&to=2026-01-31&companyID={{companyBusinessId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "resolution-time"],
+              "query": [
+                { "key": "from", "value": "2026-01-01" },
+                { "key": "to", "value": "2026-01-31" },
+                { "key": "companyID", "value": "{{companyBusinessId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "SLA Breaches Report",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/sla-breaches?from=2026-01-01&to=2026-01-31&page=1&limit=20&companyID={{companyBusinessId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "sla-breaches"],
+              "query": [
+                { "key": "from", "value": "2026-01-01" },
+                { "key": "to", "value": "2026-01-31" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "companyID", "value": "{{companyBusinessId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Agent Performance Report",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/agent-performance?from=2026-01-01&to=2026-01-31&agentId={{agentId}}&companyID={{companyBusinessId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "agent-performance"],
+              "query": [
+                { "key": "from", "value": "2026-01-01" },
+                { "key": "to", "value": "2026-01-31" },
+                { "key": "agentId", "value": "{{agentId}}" },
+                { "key": "companyID", "value": "{{companyBusinessId}}" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

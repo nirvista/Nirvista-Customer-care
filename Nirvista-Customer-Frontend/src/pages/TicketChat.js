@@ -28,7 +28,7 @@ const priorityColors = {
 function TicketChat() {
     const { ticketId } = useParams();
     const navigate = useNavigate();
-    const serverUrl = process.env.REACT_APP_API_URL || "http://localhost:7001";
+    const serverUrl = process.env.REACT_APP_API_URL || "https://nirvista-customer-care.onrender.com";
 
     // State
     const [socket, setSocket] = useState(null);
