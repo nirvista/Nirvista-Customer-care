@@ -1,5 +1,4 @@
 import API from "./axios";
-export const deleteCompany = (id) => API.delete(`/companies/${id}`);
 
 export const createCompany = (data) =>
   API.post("/api/companies", data);
@@ -12,3 +11,6 @@ export const updateCompany = (id, data) =>
 
 export const getCompanySLA = (id) =>
   API.get(`/api/companies/${id}/sla`);
+
+export const deleteCompany = (id) => 
+  API.delete(`/api/companies/${id}`);

@@ -4,6 +4,7 @@ import Layout from "../Components/Layout";
 import { getAgents } from "../api/agentapi";
 import { getCompanies } from "../api/companyapi";
 import { getSupervisors } from "../api/supervisorapi";
+import { getChatWidgets } from "../api/chatwidgetapi";
 
 // Stat Card 
 
@@ -40,6 +41,7 @@ function Dashboard() {
     const [agentCount, setAgentCount] = useState("—");
     const [supervisorCount, setSupervisorCount] = useState("—");
     const [companyCount, setCompanyCount] = useState("—");
+    const [widgetCount, setWidgetCount] = useState("—");
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -51,12 +53,14 @@ function Dashboard() {
                 }
 
                 if (isAdmin) {
-                    const [supRes, compRes] = await Promise.all([
+                    const [supRes, compRes, widgetRes] = await Promise.all([
                         getSupervisors(),
                         getCompanies(),
+                        getChatWidgets(),
                     ]);
                     setSupervisorCount(supRes.data.data?.length ?? supRes.data.length ?? 0);
                     setCompanyCount(compRes.data.data?.length ?? compRes.data.length ?? 0);
+                    setWidgetCount(widgetRes.data.data?.length ?? widgetRes.data.length ?? 0);
                 }
             } catch {
             } finally {
@@ -136,6 +140,17 @@ function Dashboard() {
                             <StatCard
                                 label="Total Companies"
                                 value={companyCount}
+                                icon={Building2}
+                                borderColor="border-l-purple-500"
+                                iconBg="bg-purple-50"
+                                iconColor="text-purple-600"
+                            />
+                        )}
+
+                        {isAdmin && (
+                            <StatCard
+                                label="Total Chat Widgets"
+                                value={widgetCount}
                                 icon={Building2}
                                 borderColor="border-l-purple-500"
                                 iconBg="bg-purple-50"

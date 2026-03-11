@@ -1,6 +1,7 @@
 import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import { created, success, badRequest, notFound, serverError } from "../utils/responseMessages.js";
+import { reassignAgentTickets } from "../services/ticketAssignmentService.js";
 
 // Create a new agent
 const createAgent = async (req, res) => {
@@ -54,13 +55,17 @@ const getAgentById = async (req, res) => {
 // Update agent
 const updateAgent = async (req, res) => {
     try {
-        const { email, name, password, companyID } = req.body;
+        const { email, name, password, companyID, isActive } = req.body;
         const updateData = {};
 
         if (email) updateData.email = email.toLowerCase();
         if (name) updateData.name = name;
         if (companyID) updateData.companyID = companyID;
         if (password) updateData.password = await bcrypt.hash(password, 10);
+        if (typeof isActive === "boolean") updateData.isActive = isActive;
+
+        // Check if agent is being deactivated
+        const wasDeactivated = typeof isActive === "boolean" && isActive === false;
 
         const agent = await User.findOneAndUpdate(
             { _id: req.params.id, role: "agent" },
@@ -71,6 +76,17 @@ const updateAgent = async (req, res) => {
         if (!agent) {
             return notFound(res, "Agent not found");
         }
+
+        // AUTO-REASSIGN: If agent was deactivated, reassign their tickets
+        if (wasDeactivated) {
+            try {
+                const reassignResult = await reassignAgentTickets(req.params.id);
+                console.log(`Agent deactivated: Reassigned ${reassignResult.reassigned}/${reassignResult.total} tickets`);
+            } catch (error) {
+                console.error("Error reassigning tickets after deactivation:", error);
+            }
+        }
+
         success(res, agent, "Agent updated successfully");
     } catch (error) {
         serverError(res);
@@ -80,7 +96,16 @@ const updateAgent = async (req, res) => {
 // Delete agent
 const deleteAgent = async (req, res) => {
     try {
-        const agent = await User.findOneAndDelete({ _id: req.params.id, role: "agent" });
+        const agentId = req.params.id;
+
+        // AUTO-REASSIGN: Reassign all tickets before deleting the agent
+        try {
+            const reassignResult = await reassignAgentTickets(agentId);
+            console.log(`Agent deletion: Reassigned ${reassignResult.reassigned}/${reassignResult.total} tickets`);
+        } catch (error) {
+            console.error("Error reassigning tickets before deletion:", error);
+        }
+        const agent = await User.findOneAndDelete({ _id: agentId, role: "agent" });
         if (!agent) {
             return notFound(res, "Agent not found");
         }

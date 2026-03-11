@@ -78,4 +78,21 @@ const getCompanySLA = async (req, res) => {
   }
 };
 
-export { createCompany, getAllCompanies, updateCompany, getCompanySLA };
+// Delete a company
+const deleteCompany = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+
+    const company = await Company.findByIdAndDelete(companyId);
+
+    if (!company) {
+      return notFound(res, "Company not found");
+    }
+
+    return success(res, null, "Company deleted successfully");
+  } catch (error) {
+    return serverError(res, error.message);
+  }
+};
+
+export { createCompany, getAllCompanies, updateCompany, getCompanySLA, deleteCompany };

@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
-import { Search, ChevronLeft, ChevronRight, X, Plus } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, X, Plus, Clock } from "lucide-react";
 import Layout from "../Components/Layout";
 import {
     createCompany,
     getCompanies,
     updateCompany,
     deleteCompany,
+    getCompanySLA,
 } from "../api/companyapi";
 
 const PAGE_SIZE = 5;
@@ -26,7 +27,6 @@ function getPaginationRange(current, total) {
             range.push(i);
         }
     }
-    // Insert ellipsis where there are gaps
     const withEllipsis = [];
     for (let i = 0; i < range.length; i++) {
         if (i > 0 && range[i] - range[i - 1] > 1) {
@@ -37,7 +37,24 @@ function getPaginationRange(current, total) {
     return withEllipsis;
 }
 
-// Modal
+// Helper to convert minutes to human readable format
+function formatMinutes(minutes) {
+    if (!minutes) return "—";
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours < 24) {
+        return mins > 0 ? `${hours}h ${mins}m` : `${hours} hour${hours > 1 ? "s" : ""}`;
+    }
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+    if (remainingHours > 0) {
+        return `${days}d ${remainingHours}h`;
+    }
+    return `${days} day${days > 1 ? "s" : ""}`;
+}
+
+// Company Modal
 
 function CompanyModal({ isEditing, form, onChange, onSave, onClose }) {
     return (
@@ -116,6 +133,178 @@ function CompanyModal({ isEditing, form, onChange, onSave, onClose }) {
     );
 }
 
+// SLA Modal
+
+function SLAModal({ company, slaData, loading, isEditing, slaForm, onEdit, onChange, onSave, onClose }) {
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                    <div>
+                        <h2 className="text-base font-bold text-gray-800">
+                            SLA Configuration
+                        </h2>
+                        <p className="text-xs text-gray-500 mt-0.5">{company.name}</p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+
+                <div className="px-6 py-5">
+                    {loading ? (
+                        <div className="py-8 text-center">
+                            <div className="w-6 h-6 border-2 border-[#13A8A5] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                            <p className="text-sm text-gray-400">Loading SLA config...</p>
+                        </div>
+                    ) : isEditing ? (
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                                    First Response Time (minutes)
+                                </label>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={slaForm.firstResponseMinutes}
+                                        onChange={(e) => onChange("firstResponseMinutes", parseInt(e.target.value) || 0)}
+                                        className="flex-1 h-10 border border-gray-200 rounded-lg px-4 text-sm text-gray-800 outline-none focus:border-[#13A8A5] focus:ring-2 focus:ring-[#13A8A5]/20 transition-all"
+                                    />
+                                    <span className="text-xs text-gray-400 w-20">
+                                        = {formatMinutes(slaForm.firstResponseMinutes)}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-1">Time allowed for first agent response</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                                    Resolution Time (minutes)
+                                </label>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={slaForm.resolutionMinutes}
+                                        onChange={(e) => onChange("resolutionMinutes", parseInt(e.target.value) || 0)}
+                                        className="flex-1 h-10 border border-gray-200 rounded-lg px-4 text-sm text-gray-800 outline-none focus:border-[#13A8A5] focus:ring-2 focus:ring-[#13A8A5]/20 transition-all"
+                                    />
+                                    <span className="text-xs text-gray-400 w-20">
+                                        = {formatMinutes(slaForm.resolutionMinutes)}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-1">Time allowed to resolve the ticket</p>
+                            </div>
+
+                            {/* Quick presets */}
+                            <div className="pt-2">
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Quick Presets</p>
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => { onChange("firstResponseMinutes", 60); onChange("resolutionMinutes", 480); }}
+                                        className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                    >
+                                        Urgent (1h / 8h)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { onChange("firstResponseMinutes", 120); onChange("resolutionMinutes", 1440); }}
+                                        className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                    >
+                                        Standard (2h / 24h)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { onChange("firstResponseMinutes", 240); onChange("resolutionMinutes", 2880); }}
+                                        className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                    >
+                                        Relaxed (4h / 48h)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                    <Clock size={18} className="text-blue-600" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">First Response</p>
+                                    <p className="text-lg font-bold text-gray-800">
+                                        {formatMinutes(slaData?.sla?.firstResponseMinutes)}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs text-gray-400">
+                                        {slaData?.sla?.firstResponseMinutes || 120} min
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                                    <Clock size={18} className="text-green-600" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Resolution Time</p>
+                                    <p className="text-lg font-bold text-gray-800">
+                                        {formatMinutes(slaData?.sla?.resolutionMinutes)}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs text-gray-400">
+                                        {slaData?.sla?.resolutionMinutes || 1440} min
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex gap-3 px-6 py-4 border-t border-gray-100 justify-end">
+                    {isEditing ? (
+                        <>
+                            <button
+                                onClick={() => onEdit(false)}
+                                className="px-4 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={onSave}
+                                className="px-5 py-2 text-sm rounded-lg bg-[#13A8A5] text-white font-semibold hover:bg-[#0b7d7b] transition-colors"
+                            >
+                                Save SLA
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={onClose}
+                                className="px-4 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors font-medium"
+                            >
+                                Close
+                            </button>
+                            <button
+                                onClick={() => onEdit(true)}
+                                className="px-5 py-2 text-sm rounded-lg bg-[#13A8A5] text-white font-semibold hover:bg-[#0b7d7b] transition-colors"
+                            >
+                                Edit SLA
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // Delete confirmation 
 
 function DeleteModal({ onConfirm, onCancel }) {
@@ -146,6 +335,7 @@ function DeleteModal({ onConfirm, onCancel }) {
 //  Main page 
 
 const emptyForm = { name: "", code: "", companyID: "" };
+const emptySLAForm = { firstResponseMinutes: 120, resolutionMinutes: 1440 };
 
 function Companies() {
     const [companies, setCompanies] = useState([]);
@@ -157,6 +347,13 @@ function Companies() {
     const [form, setForm] = useState(emptyForm);
 
     const [deleteTargetId, setDeleteTargetId] = useState(null);
+
+    // SLA Modal state
+    const [slaCompany, setSlaCompany] = useState(null);
+    const [slaData, setSlaData] = useState(null);
+    const [slaLoading, setSlaLoading] = useState(false);
+    const [slaEditing, setSlaEditing] = useState(false);
+    const [slaForm, setSlaForm] = useState(emptySLAForm);
 
     const [search, setSearch] = useState("");
     const [searchField, setSearchField] = useState("all");
@@ -183,6 +380,51 @@ function Companies() {
     useEffect(() => {
         setPage(1);
     }, [search, searchField]);
+
+    // SLA handlers
+    async function openSLA(company) {
+        setSlaCompany(company);
+        setSlaLoading(true);
+        setSlaEditing(false);
+        try {
+            const res = await getCompanySLA(company.companyID);
+            const data = res.data.data ?? res.data;
+            setSlaData(data);
+            setSlaForm({
+                firstResponseMinutes: data?.sla?.firstResponseMinutes || 120,
+                resolutionMinutes: data?.sla?.resolutionMinutes || 1440,
+            });
+        } catch (err) {
+            console.error("Error loading SLA:", err);
+            setSlaData({ sla: { firstResponseMinutes: 120, resolutionMinutes: 1440 } });
+            setSlaForm(emptySLAForm);
+        } finally {
+            setSlaLoading(false);
+        }
+    }
+
+    function handleSLAFieldChange(field, value) {
+        setSlaForm((prev) => ({ ...prev, [field]: value }));
+    }
+
+    async function handleSLASave() {
+        setError("");
+        try {
+            await updateCompany(slaCompany._id, { sla: slaForm });
+            setSlaEditing(false);
+            // Reload SLA data
+            const res = await getCompanySLA(slaCompany.companyID);
+            setSlaData(res.data.data ?? res.data);
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to save SLA. Please try again.");
+        }
+    }
+
+    function closeSLA() {
+        setSlaCompany(null);
+        setSlaData(null);
+        setSlaEditing(false);
+    }
 
     // Filtering & pagination
 
@@ -379,6 +621,12 @@ function Companies() {
                                         <td className="px-6 py-4">
                                             <div className="flex gap-2">
                                                 <button
+                                                    onClick={() => openSLA(company)}
+                                                    className="px-3 py-1.5 text-xs rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-colors font-medium"
+                                                >
+                                                    SLA
+                                                </button>
+                                                <button
                                                     onClick={() => openEdit(company)}
                                                     className="px-3 py-1.5 text-xs rounded-lg border border-[#13A8A5]/40 text-[#0b7d7b] hover:bg-[#13A8A5] hover:text-white hover:border-[#13A8A5] transition-colors font-medium"
                                                 >
@@ -459,6 +707,20 @@ function Companies() {
                 <DeleteModal
                     onConfirm={handleDelete}
                     onCancel={() => setDeleteTargetId(null)}
+                />
+            )}
+
+            {slaCompany && (
+                <SLAModal
+                    company={slaCompany}
+                    slaData={slaData}
+                    loading={slaLoading}
+                    isEditing={slaEditing}
+                    slaForm={slaForm}
+                    onEdit={setSlaEditing}
+                    onChange={handleSLAFieldChange}
+                    onSave={handleSLASave}
+                    onClose={closeSLA}
                 />
             )}
         </Layout>

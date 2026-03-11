@@ -128,6 +128,7 @@ const getTickets = async (req, res) => {
         if (assignedAgentId && role !== "agent") filter.assignedAgentId = assignedAgentId;
         if (customerEmail) filter["customer.email"] = customerEmail.toLowerCase();
         if (tag) filter.tags = { $in: [tag] };
+        if (req.query.widgetId) filter.widgetId = req.query.widgetId;
 
         // Date range filter
         if (createdFrom || createdTo) {
@@ -864,6 +865,73 @@ const getTicketNotes = async (req, res) => {
     }
 };
 
+// PUT /api/tickets/:ticketId/notes/:noteId
+const updateTicketNote = async (req, res) => {
+    try {
+        const { ticketId, noteId } = req.params;
+        const { note } = req.body;
+        const { role, id: userId, companyID } = req.user;
+
+        if (!note) {
+            return badRequest(res, "note is required");
+        }
+
+        if (typeof note !== "string" || note.trim().length === 0) {
+            return badRequest(res, "note must be a non-empty string");
+        }
+
+        const ticket = await Ticket.findOne({ ticketId });
+
+        if (!ticket) {
+            return notFound(res, `Ticket ${ticketId} not found`);
+        }
+
+        // Find the note
+        const noteIndex = ticket.notes.findIndex(n => n._id.toString() === noteId);
+        if (noteIndex === -1) {
+            return notFound(res, "Note not found");
+        }
+
+        const existingNote = ticket.notes[noteIndex];
+
+        // Role-based access control - only the author or admin can edit
+        if (role === "agent") {
+            if (existingNote.authorId.toString() !== userId.toString()) {
+                return forbidden(res, "You can only edit your own notes");
+            }
+        } else if (role === "supervisor") {
+            if (ticket.companyID !== companyID) {
+                return forbidden(res, "You don't have access to this ticket");
+            }
+            if (existingNote.authorId.toString() !== userId.toString()) {
+                return forbidden(res, "You can only edit your own notes");
+            }
+        }
+        // Admin can edit any note
+
+        // Update the note
+        ticket.notes[noteIndex].content = note.trim();
+        ticket.notes[noteIndex].updatedAt = new Date();
+        await ticket.save();
+
+        return success(res, {
+            ticketId: ticket.ticketId,
+            note: {
+                _id: ticket.notes[noteIndex]._id,
+                authorId: ticket.notes[noteIndex].authorId,
+                authorName: ticket.notes[noteIndex].authorName,
+                content: ticket.notes[noteIndex].content,
+                createdAt: ticket.notes[noteIndex].createdAt,
+                updatedAt: ticket.notes[noteIndex].updatedAt
+            }
+        }, "Note updated successfully");
+
+    } catch (error) {
+        console.error("Error updating ticket note:", error);
+        return serverError(res);
+    }
+};
+
 // GET /api/tickets/:ticketId/sla
 const getTicketSLA = async (req, res) => {
     try {
@@ -1009,5 +1077,6 @@ export {
     addCustomerMessage,
     addTicketNote,
     getTicketNotes,
+    updateTicketNote,
     getTicketSLA
 };

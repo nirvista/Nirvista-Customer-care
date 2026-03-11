@@ -131,4 +131,23 @@ const updateWidget = async (req, res) => {
     }
 };
 
-export { createWidget, getWidgets, getWidgetById, updateWidget };
+// DELETE /api/chat-widgets/:widgetId
+const deleteWidget = async (req, res) => {
+    try {
+        const { widgetId } = req.params;
+
+        const widget = await Widget.findOneAndDelete({ widgetId });
+
+        if (!widget) {
+            return notFound(res, "Widget not found");
+        }
+
+        return success(res, null, "Widget deleted successfully");
+
+    } catch (error) {
+        console.error("Error deleting widget:", error);
+        return serverError(res);
+    }
+};
+
+export { createWidget, getWidgets, getWidgetById, updateWidget, deleteWidget };

@@ -4,7 +4,7 @@ import './ChatWidget.css';
 
 const ChatWidget = ({
     widgetId,
-    serverUrl = 'https://nirvista-customer-care.onrender.com',
+    serverUrl = process.env.REACT_APP_API_BASE_URL || 'https://nirvista-customer-care.onrender.com',
     primaryColor = '#0b7d7b',
     welcomeMessage = 'Hi! How can we help you today?',
     position = 'bottom-right'
@@ -435,7 +435,7 @@ const ChatWidget = ({
                                 <textarea
                                     value={inputMessage}
                                     onChange={handleTyping}
-                                    onKeyPress={handleKeyPress}
+                                    onKeyDown={handleKeyPress}
                                     placeholder="Type a message..."
                                     rows="1"
                                 />
