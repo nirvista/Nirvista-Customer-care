@@ -1,5 +1,5 @@
 import express from "express";
-import { getTickets, getTicketById, createTicketFromChat, assignTicket, updateTicketStatus, updateTicketPriority, updateTicketTags, addAgentMessage, addCustomerMessage, addTicketNote, getTicketNotes, getTicketSLA } from "../controllers/ticketController.js";
+import { getTickets, getTicketById, createTicketFromChat, assignTicket, updateTicketStatus, updateTicketPriority, updateTicketTags, addAgentMessage, addCustomerMessage, addTicketNote, getTicketNotes, updateTicketNote, getTicketSLA } from "../controllers/ticketController.js";
 import verifyToken from "../middlewares/authMiddleware.js";
 import authorizeRoles from "../middlewares/roleMiddleware.js";
 
@@ -37,6 +37,9 @@ router.post("/:ticketId/notes", verifyToken, authorizeRoles("admin", "supervisor
 
 // GET /api/tickets/:ticketId/notes - Get internal notes (admin, supervisor, agent)
 router.get("/:ticketId/notes", verifyToken, authorizeRoles("admin", "supervisor", "agent"), getTicketNotes);
+
+// PUT /api/tickets/:ticketId/notes/:noteId - Update internal note (admin, supervisor, agent)
+router.put("/:ticketId/notes/:noteId", verifyToken, authorizeRoles("admin", "supervisor", "agent"), updateTicketNote);
 
 // GET /api/tickets/:ticketId/sla - Get ticket SLA details
 router.get("/:ticketId/sla", verifyToken, authorizeRoles("admin", "supervisor", "agent"), getTicketSLA);

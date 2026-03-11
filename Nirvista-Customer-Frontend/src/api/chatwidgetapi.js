@@ -11,3 +11,6 @@ export const getChatWidgetById = (id) =>
 
 export const updateChatWidget = (id, data) =>
   API.put(`/api/chat-widgets/${id}`, data);
+
+export const deleteChatWidget = (id) =>
+  API.delete(`/api/chat-widgets/${id}`);

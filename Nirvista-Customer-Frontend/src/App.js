@@ -8,12 +8,13 @@ import Supervisors from './pages/Supervisors';
 import Companies from './pages/Companies';
 import Tickets from './pages/Tickets';
 import TicketChat from './pages/TicketChat';
+import ChatWidgets from './pages/ChatWidgets';
 import ChatWidget from './Components/ChatWidget';
 
 function App() {
     // Get widget config from environment variables
-const widgetId = process.env.REACT_APP_WIDGET_ID || 'YOUR_WIDGET_ID';
-const serverUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:7002';
+const widgetId = process.env.REACT_APP_WIDGET_ID || 'w_100';
+const serverUrl = process.env.REACT_APP_API_BASE_URL || 'https://nirvista-customer-care.onrender.com';
 
     return (
         <Router>
@@ -51,6 +52,11 @@ const serverUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:7002';
                 <Route path="/companies" element={
                     <ProtectedRoute allowedRoles={["admin"]}>
                         <Companies />
+                    </ProtectedRoute>
+                } />
+                <Route path="/chat-widgets" element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                        <ChatWidgets />
                     </ProtectedRoute>
                 } />
             </Routes>

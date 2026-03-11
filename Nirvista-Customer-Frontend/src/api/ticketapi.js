@@ -23,3 +23,12 @@ export const addAgentMessage = (ticketId, data) =>
 
 export const getTicketSLA = (ticketId) =>
     API.get(`/api/tickets/${ticketId}/sla`);
+
+export const getTicketNotes = (ticketId) =>
+    API.get(`/api/tickets/${ticketId}/notes`);
+
+export const addTicketNote = (ticketId, note) =>
+    API.post(`/api/tickets/${ticketId}/notes`, { note });
+
+export const updateTicketNote = (ticketId, noteId, note) =>
+    API.put(`/api/tickets/${ticketId}/notes/${noteId}`, { note });

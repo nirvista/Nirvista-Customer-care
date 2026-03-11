@@ -3,9 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import { 
     ArrowLeft, Send, Paperclip, User, Mail, Phone, Clock, 
-    AlertCircle, CheckCircle, XCircle, MoreVertical 
+    AlertCircle, CheckCircle, XCircle, MoreVertical, StickyNote, Plus, Edit2 
 } from "lucide-react";
 import Layout from "../Components/Layout";
+import { getTicketNotes, addTicketNote, updateTicketNote } from "../api/ticketapi";
 import "./TicketChat.css";
 
 const statusOptions = ["open", "pending", "resolved", "closed"];
@@ -28,7 +29,7 @@ const priorityColors = {
 function TicketChat() {
     const { ticketId } = useParams();
     const navigate = useNavigate();
-    const serverUrl = process.env.REACT_APP_API_URL || "https://nirvista-customer-care.onrender.com";
+    const serverUrl = process.env.REACT_APP_API_BASE_URL || "https://nirvista-customer-care.onrender.com";
 
     // State
     const [socket, setSocket] = useState(null);
@@ -43,6 +44,15 @@ function TicketChat() {
     const [showStatusMenu, setShowStatusMenu] = useState(false);
     const [showPriorityMenu, setShowPriorityMenu] = useState(false);
 
+    // Notes state
+    const [notes, setNotes] = useState([]);
+    const [notesLoading, setNotesLoading] = useState(false);
+    const [showAddNote, setShowAddNote] = useState(false);
+    const [newNote, setNewNote] = useState("");
+    const [editingNoteId, setEditingNoteId] = useState(null);
+    const [editNoteContent, setEditNoteContent] = useState("");
+    const [noteSaving, setNoteSaving] = useState(false);
+
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const typingTimeoutRef = useRef(null);
@@ -53,6 +63,26 @@ function TicketChat() {
     };
 
     useEffect(scrollToBottom, [messages]);
+
+    // Load notes
+    const loadNotes = useCallback(async () => {
+        setNotesLoading(true);
+        try {
+            const res = await getTicketNotes(ticketId);
+            const data = res.data.data ?? res.data;
+            setNotes(data.notes || []);
+        } catch (err) {
+            console.error("Error loading notes:", err);
+        } finally {
+            setNotesLoading(false);
+        }
+    }, [ticketId]);
+
+    useEffect(() => {
+        if (ticketId) {
+            loadNotes();
+        }
+    }, [ticketId, loadNotes]);
 
     // Initialize socket connection
     useEffect(() => {
@@ -247,6 +277,47 @@ function TicketChat() {
         setShowPriorityMenu(false);
     };
 
+    // Notes handlers
+    const handleAddNote = async () => {
+        if (!newNote.trim()) return;
+        setNoteSaving(true);
+        try {
+            await addTicketNote(ticketId, newNote.trim());
+            setNewNote("");
+            setShowAddNote(false);
+            loadNotes();
+        } catch (err) {
+            setError("Failed to add note");
+        } finally {
+            setNoteSaving(false);
+        }
+    };
+
+    const handleEditNote = (note) => {
+        setEditingNoteId(note._id);
+        setEditNoteContent(note.content);
+    };
+
+    const handleSaveEditNote = async () => {
+        if (!editNoteContent.trim()) return;
+        setNoteSaving(true);
+        try {
+            await updateTicketNote(ticketId, editingNoteId, editNoteContent.trim());
+            setEditingNoteId(null);
+            setEditNoteContent("");
+            loadNotes();
+        } catch (err) {
+            setError("Failed to update note");
+        } finally {
+            setNoteSaving(false);
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setEditingNoteId(null);
+        setEditNoteContent("");
+    };
+
     // Handle key press
     const handleKeyPress = (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -265,6 +336,15 @@ function TicketChat() {
             month: "short",
             day: "numeric",
             year: "numeric"
+        });
+    };
+
+    const formatNoteDate = (date) => {
+        return new Date(date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
         });
     };
 
@@ -402,7 +482,7 @@ function TicketChat() {
                         <textarea
                             value={inputMessage}
                             onChange={handleTyping}
-                            onKeyPress={handleKeyPress}
+                            onKeyDown={handleKeyPress}
                             placeholder="Type your reply..."
                             rows="1"
                             disabled={ticket?.status === "closed"}
@@ -556,6 +636,116 @@ function TicketChat() {
                             )}
                         </div>
                     )}
+
+                    {/* Notes Section */}
+                    <div className="sidebar-section">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="flex items-center gap-2">
+                                <StickyNote className="w-4 h-4" />
+                                Internal Notes
+                            </h3>
+                            <button
+                                onClick={() => setShowAddNote(!showAddNote)}
+                                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                title="Add note"
+                            >
+                                <Plus className="w-4 h-4 text-gray-500" />
+                            </button>
+                        </div>
+
+                        {/* Add Note Form */}
+                        {showAddNote && (
+                            <div className="mb-3 p-2 bg-gray-50 rounded-lg">
+                                <textarea
+                                    value={newNote}
+                                    onChange={(e) => setNewNote(e.target.value)}
+                                    placeholder="Add a note..."
+                                    rows={3}
+                                    className="w-full text-sm border border-gray-200 rounded-lg p-2 outline-none focus:border-[#13A8A5] resize-none"
+                                />
+                                <div className="flex gap-2 mt-2 justify-end">
+                                    <button
+                                        onClick={() => { setShowAddNote(false); setNewNote(""); }}
+                                        className="px-3 py-1 text-xs text-gray-600 hover:bg-gray-200 rounded transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleAddNote}
+                                        disabled={!newNote.trim() || noteSaving}
+                                        className="px-3 py-1 text-xs bg-[#13A8A5] text-white rounded hover:bg-[#0b7d7b] disabled:opacity-50 transition-colors"
+                                    >
+                                        {noteSaving ? "Saving..." : "Add Note"}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Notes List */}
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                            {notesLoading ? (
+                                <div className="text-center py-4">
+                                    <div className="w-5 h-5 border-2 border-[#13A8A5] border-t-transparent rounded-full animate-spin mx-auto" />
+                                </div>
+                            ) : notes.length === 0 ? (
+                                <p className="text-xs text-gray-400 text-center py-4">No notes yet</p>
+                            ) : (
+                                notes.map((note) => (
+                                    <div key={note._id} className="bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                                        {editingNoteId === note._id ? (
+                                            <>
+                                                <textarea
+                                                    value={editNoteContent}
+                                                    onChange={(e) => setEditNoteContent(e.target.value)}
+                                                    rows={2}
+                                                    className="w-full text-xs border border-gray-200 rounded p-2 outline-none focus:border-[#13A8A5] resize-none"
+                                                />
+                                                <div className="flex gap-2 mt-2 justify-end">
+                                                    <button
+                                                        onClick={handleCancelEdit}
+                                                        className="px-2 py-1 text-xs text-gray-600 hover:bg-gray-200 rounded transition-colors"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        onClick={handleSaveEditNote}
+                                                        disabled={!editNoteContent.trim() || noteSaving}
+                                                        className="px-2 py-1 text-xs bg-[#13A8A5] text-white rounded hover:bg-[#0b7d7b] disabled:opacity-50 transition-colors"
+                                                    >
+                                                        {noteSaving ? "Saving..." : "Save"}
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <p className="text-xs text-gray-800 flex-1">{note.content}</p>
+                                                    <button
+                                                        onClick={() => handleEditNote(note)}
+                                                        className="p-1 hover:bg-yellow-200 rounded transition-colors flex-shrink-0"
+                                                        title="Edit note"
+                                                    >
+                                                        <Edit2 className="w-3 h-3 text-gray-500" />
+                                                    </button>
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[10px] text-gray-500 font-medium">
+                                                        {note.authorName}
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-400">
+                                                        {formatNoteDate(note.createdAt)}
+                                                    </span>
+                                                    {note.updatedAt && note.updatedAt !== note.createdAt && (
+                                                        <span className="text-[10px] text-gray-400 italic">(edited)</span>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
 
                     {/* Quick Actions */}
                     <div className="sidebar-section">
