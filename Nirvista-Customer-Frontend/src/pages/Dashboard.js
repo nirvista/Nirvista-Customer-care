@@ -35,6 +35,7 @@ function StatCardSkeleton() {
 
 function Dashboard() {
     const role = localStorage.getItem("role");
+    const companyID = localStorage.getItem("companyID");
     const isAdmin = role === "admin";
     const isSupervisor = role === "supervisor";
 
@@ -45,31 +46,39 @@ function Dashboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        async function loadStats() {
-            try {
-                if (isAdmin || isSupervisor) {
-                    const res = await getAgents();
-                    setAgentCount(res.data.data?.length ?? res.data.length ?? 0);
+    async function loadStats() {
+        try {
+            if (isAdmin || isSupervisor) {
+                const res = await getAgents();
+                const allAgents = res.data.data ?? res.data ?? [];
+                
+                // Supervisors only count agents from their company
+                if (isSupervisor && companyID) {
+                    const filteredAgents = allAgents.filter(agent => agent.companyID === companyID);
+                    setAgentCount(filteredAgents.length);
+                } else {
+                    setAgentCount(allAgents.length);
                 }
-
-                if (isAdmin) {
-                    const [supRes, compRes, widgetRes] = await Promise.all([
-                        getSupervisors(),
-                        getCompanies(),
-                        getChatWidgets(),
-                    ]);
-                    setSupervisorCount(supRes.data.data?.length ?? supRes.data.length ?? 0);
-                    setCompanyCount(compRes.data.data?.length ?? compRes.data.length ?? 0);
-                    setWidgetCount(widgetRes.data.data?.length ?? widgetRes.data.length ?? 0);
-                }
-            } catch {
-            } finally {
-                setLoading(false);
             }
-        }
 
-        loadStats();
-    }, [isAdmin, isSupervisor]);
+            if (isAdmin) {
+                const [supRes, compRes, widgetRes] = await Promise.all([
+                    getSupervisors(),
+                    getCompanies(),
+                    getChatWidgets(),
+                ]);
+                setSupervisorCount(supRes.data.data?.length ?? supRes.data.length ?? 0);
+                setCompanyCount(compRes.data.data?.length ?? compRes.data.length ?? 0);
+                setWidgetCount(widgetRes.data.data?.length ?? widgetRes.data.length ?? 0);
+            }
+        } catch {
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    loadStats();
+}, [isAdmin, isSupervisor, companyID]);
 
     const today = new Date().toLocaleDateString("en-US", {
         weekday: "long",

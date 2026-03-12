@@ -238,16 +238,12 @@ const updateAgentStatus = async (agentId) => {
         // AUTO-TRIGGER: If agent has capacity, process unassigned tickets
         if (activeTickets < MAX_TICKETS_PER_AGENT && updatedAgent.companyID) {
             console.log(`Agent ${updatedAgent.name} has capacity, processing unassigned tickets for company ${updatedAgent.companyID}...`);
-            // Run asynchronously to not block the response
-            setImmediate(async () => {
-                console.log(`[AUTO-ASSIGN] Starting for company ${updatedAgent.companyID}`);
-                try {
-                    const result = await processUnassignedTicketsForCompany(updatedAgent.companyID);
-                    console.log(`[AUTO-ASSIGN] Completed:`, result);
-                } catch (error) {
-                    console.error("[AUTO-ASSIGN] Error:", error);
-                }
-            });
+            try {
+                const result = await processUnassignedTicketsForCompany(updatedAgent.companyID);
+                console.log(`[AUTO-ASSIGN] Completed:`, result);
+            } catch (error) {
+                console.error("[AUTO-ASSIGN] Error:", error);
+            }
         }
         
         return { activeTickets, isIdle: activeTickets === 0 };
