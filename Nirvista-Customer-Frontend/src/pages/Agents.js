@@ -156,7 +156,9 @@ const emptyForm = { name: "", email: "", password: "", companyID: "" };
 
 function Agents() {
     const role = localStorage.getItem("role");
+    const companyID = localStorage.getItem("companyID");
     const isAdmin = role === "admin";
+    const isSupervisor = role === "supervisor";
 
     const [agents, setAgents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -198,10 +200,14 @@ function Agents() {
     // Filtering & pagination 
 
     const filtered = useMemo(() => {
+        let result = agents;
+        if (isSupervisor && companyID) {
+            result = result.filter((agent) => agent.companyID === companyID);
+        }
         const q = search.toLowerCase().trim();
-        if (!q) return agents;
+        if (!q) return result;
 
-        return agents.filter((agent) => {
+        return result.filter((agent) => {
             if (searchField === "name")      return agent.name?.toLowerCase().includes(q);
             if (searchField === "email")     return agent.email?.toLowerCase().includes(q);
             if (searchField === "companyID") return agent.companyID?.toLowerCase().includes(q);
@@ -211,7 +217,7 @@ function Agents() {
                 agent.companyID?.toLowerCase().includes(q)
             );
         });
-    }, [agents, search, searchField]);
+    }, [agents, search, searchField, isSupervisor, companyID]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
     const pageSlice  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
