@@ -35,13 +35,17 @@ const releaseLock = (companyID) => {
     assignmentLocks.delete(companyID);
 };
 
-const findBestAgent = async (companyID) => {
+const findBestAgent = async (companyID, excludeAgentId) => {
     // Get all agents for the company
-    const agents = await User.find({ 
+    let agents = await User.find({ 
         role: "agent", 
         companyID: companyID,
         isActive: true 
     }).lean();
+
+    if (excludeAgentId) {
+        agents = agents.filter(agent => agent._id.toString() !== excludeAgentId.toString());
+    }
 
     if (agents.length === 0) {
         return null;
@@ -93,8 +97,8 @@ const findBestAgent = async (companyID) => {
  * @param {Object} ticket - The ticket to assign
  * @returns {Object} - Result of the assignment
  */
-const assignTicketToAgent = async (ticket) => {
-    const agent = await findBestAgent(ticket.companyID);
+const assignTicketToAgent = async (ticket, excludeAgentId) => {
+    const agent = await findBestAgent(ticket.companyID, excludeAgentId);
 
     if (!agent) {
         console.log(`No agents available for company ${ticket.companyID}`);
@@ -335,6 +339,10 @@ const reassignAgentTickets = async (agentId) => {
             status: { $in: ["new", "open", "pending"] }
         });
 
+        if (tickets.length === 0) {
+            return { reassigned: 0, total: 0 };
+        }
+
         // Unassign all tickets first
         await Ticket.updateMany(
             { assignedAgentId: agentId, status: { $in: ["new", "open", "pending"] } },
@@ -345,7 +353,7 @@ const reassignAgentTickets = async (agentId) => {
         let reassignedCount = 0;
         for (const ticket of tickets) {
             ticket.assignedAgentId = null;
-            const result = await assignTicketToAgent(ticket);
+            const result = await assignTicketToAgent(ticket, agentId);
             if (result.success) reassignedCount++;
         }
 

@@ -10,6 +10,7 @@ import Tickets from './pages/Tickets';
 import TicketChat from './pages/TicketChat';
 import ChatWidgets from './pages/ChatWidgets';
 import ChatWidget from './Components/ChatWidget';
+import History from './pages/History';
 
 function App() {
     // Get widget config from environment variables
@@ -57,6 +58,11 @@ const serverUrl = process.env.REACT_APP_API_BASE_URL || 'https://nirvista-custom
                 <Route path="/chat-widgets" element={
                     <ProtectedRoute allowedRoles={["admin"]}>
                         <ChatWidgets />
+                    </ProtectedRoute>
+                } />
+                <Route path="/history" element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                        <History />
                     </ProtectedRoute>
                 } />
             </Routes>
