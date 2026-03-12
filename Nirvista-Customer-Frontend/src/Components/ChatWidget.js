@@ -98,7 +98,7 @@ const ChatWidget = ({
             setMessages(prev => [...prev, {
                 sender: 'system',
                 senderName: 'System',
-                content: `${data.agentName} has joined the chat`,
+                //content: `${data.agentName} has joined the chat`,
                 createdAt: new Date()
             }]);
         });
