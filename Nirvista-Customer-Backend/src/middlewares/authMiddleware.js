@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { badRequest, unauthorized } from "../utils/responseMessages.js";
+import { unauthorized } from "../utils/responseMessages.js";
 
 const verifyToken = (req, res, next) => {
     let token;
@@ -15,7 +15,7 @@ const verifyToken = (req, res, next) => {
             console.log("Decoded user:", req.user);
             next();
         } catch (error) {
-            badRequest(res, "Token is invalid");
+            unauthorized(res, "Token is invalid");
         }
     }else{
         return unauthorized(res, "Unauthorized, no token provided");
