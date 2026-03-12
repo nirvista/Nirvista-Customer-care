@@ -236,21 +236,66 @@ const updateAgentStatus = async (agentId) => {
         }
 
         // AUTO-TRIGGER: If agent has capacity, process unassigned tickets
-        if (activeTickets < MAX_TICKETS_PER_AGENT) {
-            console.log(`Agent ${updatedAgent.name} has capacity, processing unassigned tickets...`);
-            // Run asynchronously to not block the response
-            setImmediate(async () => {
-                try {
-                    await processUnassignedTickets();
-                } catch (error) {
-                    console.error("Error auto-processing unassigned tickets:", error);
-                }
-            });
+        if (activeTickets < MAX_TICKETS_PER_AGENT && updatedAgent.companyID) {
+            console.log(`Agent ${updatedAgent.name} has capacity, processing unassigned tickets for company ${updatedAgent.companyID}...`);
+            try {
+                const result = await processUnassignedTicketsForCompany(updatedAgent.companyID);
+                console.log(`[AUTO-ASSIGN] Completed:`, result);
+            } catch (error) {
+                console.error("[AUTO-ASSIGN] Error:", error);
+            }
         }
         
         return { activeTickets, isIdle: activeTickets === 0 };
     } catch (error) {
         console.error("Error updating agent status:", error);
+        throw error;
+    }
+};
+
+/**
+ * Process unassigned tickets for a specific company
+ * @param {string} companyID - The company to process tickets for
+ */
+const processUnassignedTicketsForCompany = async (companyID) => {
+    try {
+        // Get unassigned tickets for THIS company only
+        const unassignedTickets = await Ticket.find({
+            companyID: companyID,  // Filter by company
+            assignedAgentId: null,
+            status: { $in: ["new", "open", "pending"] }
+        }).lean();
+
+        if (unassignedTickets.length === 0) {
+            console.log(`No unassigned tickets for company ${companyID}`);
+            return { processed: 0, assigned: 0 };
+        }
+
+        // Sort tickets by priority
+        unassignedTickets.sort((a, b) => {
+            return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
+        });
+
+        let assignedCount = 0;
+
+        for (const ticket of unassignedTickets) {
+            const result = await assignTicketToAgent(ticket);
+            if (result.success) {
+                assignedCount++;
+            } else {
+                // No more agents available, stop trying
+                if (result.reason === "No agents available") {
+                    console.log(`No more agents available for company ${companyID}, stopping`);
+                    break;
+                }
+            }
+        }
+
+        console.log(`Company ${companyID}: Processed ${unassignedTickets.length} tickets, assigned ${assignedCount}`);
+        return { processed: unassignedTickets.length, assigned: assignedCount };
+
+    } catch (error) {
+        console.error(`Error processing unassigned tickets for company ${companyID}:`, error);
         throw error;
     }
 };
@@ -313,7 +358,8 @@ const reassignAgentTickets = async (agentId) => {
 
 export { 
     autoAssignNewTicket, 
-    processUnassignedTickets, 
+    processUnassignedTickets,
+    processUnassignedTicketsForCompany, 
     updateAgentStatus,
     recalculateAllAgentStats,
     findBestAgent,

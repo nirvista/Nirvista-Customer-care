@@ -15,6 +15,7 @@ function Login() {
             const res = await loginUser({ email, password });
             localStorage.setItem("token", res.data.data.token);
             localStorage.setItem("role", res.data.data.user.role);
+            localStorage.setItem("companyID", res.data.data.user.companyID || "");
             navigate("/dashboard");
         } catch (err) {
             setError(err.response?.data?.message || "Invalid email or password.");
