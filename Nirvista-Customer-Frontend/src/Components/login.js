@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { loginUser } from "../api/authapi";
 
 function Login() {
@@ -7,6 +8,7 @@ function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -25,7 +27,6 @@ function Login() {
         <div className="flex h-screen">
             {/* Left branding panel */}
             <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[#0b7d7b] to-[#13A8A5] flex-col items-center justify-center relative overflow-hidden">
-                {/* Decorative circles */}
                 <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-white/10" />
                 <div className="absolute -bottom-24 -right-16 w-96 h-96 rounded-full bg-white/10" />
                 <div className="absolute top-1/2 left-10 w-20 h-20 rounded-full bg-white/5" />
@@ -47,7 +48,6 @@ function Login() {
             {/* Right form panel */}
             <div className="w-full lg:w-1/2 flex items-center justify-center bg-white px-8 py-12">
                 <div className="w-full max-w-sm">
-                    {/* Mobile logo */}
                     <div className="flex lg:hidden justify-center mb-8">
                         <img src="/logo/logo.png" alt="Nirvista" className="h-10 object-contain" />
                     </div>
@@ -74,39 +74,40 @@ function Login() {
                             />
                         </div>
                         <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                                <label className="block text-sm font-medium text-gray-700">Password</label>
-                               
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    required
+                                    className="w-full h-11 border border-gray-200 rounded-lg px-4 pr-11 text-sm text-gray-800 outline-none focus:border-[#13A8A5] focus:ring-2 focus:ring-[#13A8A5]/20 transition-all"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(prev => !prev)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#13A8A5] transition-colors"
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
                             </div>
-                            <input
-                                type="password"
-                                required
-                                className="w-full h-11 border border-gray-200 rounded-lg px-4 text-sm text-gray-800 outline-none focus:border-[#13A8A5] focus:ring-2 focus:ring-[#13A8A5]/20 transition-all"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                            />
                         </div>
-                       <div className='w-full text-right'>
-                         <Link to="#" className="text-[#13A8A5] hover:text-[#0b7d7b] font-medium text-sm hover:underline">
-                             Forgot password?
-                         </Link>
-                       </div>
+
+                        <div className="w-full text-right">
+                            <Link to="#" className="text-[#13A8A5] hover:text-[#0b7d7b] font-medium text-sm hover:underline">
+                                Forgot password?
+                            </Link>
+                        </div>
 
                         <button
                             type="submit"
                             className="w-full h-11 bg-[#13A8A5] hover:bg-[#0b7d7b] text-white font-semibold rounded-lg transition-colors mt-2"
                         >
-                          Login
+                            Login
                         </button>
                     </form>
-
-                    <p className="text-center text-sm text-gray-500 mt-6">
-                        Different User? {" "}
-                        <Link to="/signup" className="text-[#13A8A5] hover:text-[#0b7d7b] font-medium">
-                            Sign up
-                        </Link>
-                    </p>
                 </div>
             </div>
         </div>
